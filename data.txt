@@ -1,0 +1,8 @@
+str,1,2
+str,1,2
+str,1,2
+str,1,9
+str,1,2
+strg,1,6
+str,1,2
+strg,1,2
