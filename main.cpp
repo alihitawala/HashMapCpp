@@ -3,7 +3,7 @@
 #include <sstream>
 #include <cstring>
 #include <map>
-#include <stdlib.h>
+#include <unordered_map>
 
 using namespace std;
 
@@ -52,18 +52,17 @@ public:
 
 int main() {
     ifstream input("data.txt");
-    string line;
-    string delim = ",";
-    map<string, Data> data;
-    int total = 0;
+    ofstream output("output.dat");
+    string line, delim = ",";
+    unordered_map<string, Data> data(9);
     while (getline(input, line)) {
         char *cstr = strdup(line.c_str());
         char *p = strtok(cstr, delim.c_str());
         string key = string(p);
         p = strtok(NULL, delim.c_str());
-        int f = atoi(p);
+        int f = stoi(p);
         p = strtok(NULL, delim.c_str());
-        int s = atoi(p);
+        int s = stoi(p);
         if (data.find(key) == data.end()) {
             data[key] = Data(key, f, s);
         } else {
@@ -77,7 +76,13 @@ int main() {
     for (auto const &item: data) {
         Data d = item.second;
         double avg = d.getFirst() * 1.0 / d.getCount();
+        ostringstream strs;
+        strs << avg;
+        string out = d.getKey() + "\t" + strs.str() + "\t" + to_string(d.getSecond()) + "\n";
+        output << out;
         cout << d.getKey() << " " << avg << " " << d.getSecond() << endl;
     }
+    output.close();
+    input.close();
     return 0;
 }
