@@ -9,15 +9,16 @@ using namespace std;
 
 class Data {
     string key;
-    int first, second, count;
+    double first;
+    int second, count;
 public:
     Data() {}
 
-    Data(const string &key, int first, int second) : key(key), first(first), second(second) {
+    Data(const string &key, double first, int second) : key(key), first(first), second(second) {
         Data::count = 0;
     }
 
-    int getFirst() const {
+    double getFirst() const {
         return first;
     }
 
@@ -33,7 +34,7 @@ public:
         Data::key = key;
     }
 
-    void setFirst(int first) {
+    void setFirst(double first) {
         Data::first = first;
     }
 
@@ -50,9 +51,13 @@ public:
     }
 };
 
-int main() {
-    ifstream input("data.txt");
-    ofstream output("output.dat");
+int main(int argc, char** argv) {
+    if (argc < 3) {
+        cout << "Usage <program_name> <input_file_name> <outout_file_name>" << endl;
+        exit(1);
+    }
+    ifstream input(argv[1]);
+    ofstream output(argv[2]);
     string line, delim = ",";
     unordered_map<string, Data> data(9);
     while (getline(input, line)) {
@@ -60,7 +65,7 @@ int main() {
         char *p = strtok(cstr, delim.c_str());
         string key = string(p);
         p = strtok(NULL, delim.c_str());
-        int f = stoi(p);
+        double f = (double) stoi(p);
         p = strtok(NULL, delim.c_str());
         int s = stoi(p);
         if (data.find(key) == data.end()) {
@@ -80,7 +85,6 @@ int main() {
         strs << avg;
         string out = d.getKey() + "\t" + strs.str() + "\t" + to_string(d.getSecond()) + "\n";
         output << out;
-        cout << d.getKey() << " " << avg << " " << d.getSecond() << endl;
     }
     output.close();
     input.close();
