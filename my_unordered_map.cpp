@@ -5,37 +5,23 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
-#include <iomanip>
-#include <climits>
 
-// Bucket size for this program
-#define BUCKET_SIZE 100
+#define BUCKET_SIZE 10
 
 using namespace std;
-// Container to store the data each line it stores first - sum till now,
-// second - max till now and count is the count this key appeared in data
+
 class Data {
     string key;
-    long double first;
+    double first;
     int second, count;
-    bool secondPresent;
 public:
     Data() {}
 
-    Data(const string &key, long double first, int second) : key(key), first(first), second(second) {
+    Data(const string &key, double first, int second) : key(key), first(first), second(second) {
         Data::count = 0;
-        Data::secondPresent = false;
     }
 
-    bool isSecondPresent() const {
-        return secondPresent;
-    }
-
-    void setSecondPresent(bool secondPresent) {
-        Data::secondPresent = secondPresent;
-    }
-
-    long double getFirst() const {
+    double getFirst() const {
         return first;
     }
 
@@ -51,7 +37,7 @@ public:
         Data::key = key;
     }
 
-    void setFirst(long double first) {
+    void setFirst(double first) {
         Data::first = first;
     }
 
@@ -67,11 +53,8 @@ public:
         Data::count = count;
     }
 };
-
-// Hashmap impl - takes key as string and value as Data object
 class HashMap {
     vector<Data> buckets[BUCKET_SIZE];
-    // hash function for this hash map
     int hash_function(string word) {
         int seed = 131;
         unsigned long hash = 0;
@@ -82,7 +65,7 @@ class HashMap {
         int h = (int) hash % BUCKET_SIZE;
         return h < 0 ? -h : h;
     }
-    // Given key get index of data in its bucket or return -1 if key is missing
+
     int getIndexIfPresent(string key) {
         int k = hash_function(key);
         vector<Data> temp = buckets[k];
@@ -98,18 +81,15 @@ class HashMap {
 public:
     HashMap() {}
 
-    // check if that key is there in that map
     bool find(string key) {
         return this->getIndexIfPresent(key) != -1;
     }
 
-    // get Value given key
     Data getData(string key) {
         int k = hash_function(key);
         return buckets[k][this->getIndexIfPresent(key)];
     }
 
-    // add or update the key and value
     void add(string key, Data value) {
         int index = this->getIndexIfPresent(key);
         int k = this->hash_function(key);
@@ -120,7 +100,6 @@ public:
         }
     }
 
-    // gets all the values in a vector present in this hash map
     vector<Data> getAllData() {
         vector<Data> result;
         for (int i = 0; i < BUCKET_SIZE; ++i) {
@@ -133,7 +112,6 @@ public:
     }
 };
 
-// checks if the string in an integer
 inline bool isInteger(const std::string & s)
 {
     if(s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false ;
@@ -149,61 +127,43 @@ int main(int argc, char** argv) {
         cout << "Usage <program_name> <input_file_name> <outout_file_name>" << endl;
         exit(1);
     }
-    //open input and output file
     ifstream input(argv[1]);
     ofstream output(argv[2]);
     string line, delim = ",";
-    HashMap* map = new HashMap();
+    unordered_map<string, Data> data(9);
     while (getline(input, line)) {
         char *token, *str, *tofree;
         tofree = str = strdup(line.c_str());
         token = strsep(&str, delim.c_str());
-        // Extract string from the line
         string key = string(token);
         token = strsep(&str, delim.c_str());
-        // Extract first int from line
-        long double f = 0.0;
-        bool firstValuePresent = false;
-        bool secondValuePresent = false;
+        double f = 0.0;
         if (isInteger(token)) {
             f = (double) stoi(token);
-            firstValuePresent = true;
         }
         token = strsep(&str, delim.c_str());
-        // Extract second int from line
-        int s = INT_MIN;
+        double s = 0.0;
         if (isInteger(token)) {
-            s = stoi(token);
-            secondValuePresent = true;
+            s = (double) stoi(token);
         }
-        Data newData = Data(key, f, s);
-        newData.setSecondPresent(newData.isSecondPresent() || secondValuePresent);
-        // if the data already present update it
-        if (map->find(key)) {
-            newData = map->getData(key);
-            // sum till now
-            newData.setFirst(newData.getFirst() + f);
-            // max till now
-            if (newData.getSecond() < s) {
-                newData.setSecond(s);
+        if (data.find(key) == data.end()) {
+            data[key] = Data(key, f, s);
+        } else {
+            data[key].setFirst(data[key].getFirst() + f);
+            if (data[key].getSecond() < s) {
+                data[key].setSecond(s);
             }
         }
-        if (firstValuePresent)
-            newData.setCount(newData.getCount() + 1);
-        map->add(key, newData);
+        data[key].setCount(data[key].getCount() + 1);
         free(tofree);
     }
-    vector<Data> allData = map->getAllData();
-    for (auto const &d: allData) {
-        output << fixed << setprecision(16);
-        if (d.getCount() == 0 && !d.isSecondPresent())
-            output << d.getKey() << "\t|" << "" << "\t|" << "" << "\n";
-        else if (d.getCount() == 0)
-            output << d.getKey() << "\t|" << "" << "\t|" << to_string(d.getSecond()) << "\n";
-        else if (!d.isSecondPresent())
-            output << d.getKey() << "\t|" << ((double)d.getFirst() / (double) d.getCount()) << "\t|" << "" << "\n";
-        else
-            output << d.getKey() << "\t|" << ((double)d.getFirst() / (double) d.getCount()) << "\t|" << to_string(d.getSecond()) << "\n";
+    for (auto const &item: data) {
+        Data d = item.second;
+        double avg = d.getFirst() * 1.0 / d.getCount();
+        ostringstream strs;
+        strs << avg;
+        string out = d.getKey() + "\t" + strs.str() + "\t" + to_string(d.getSecond()) + "\n";
+        output << out;
     }
     output.close();
     input.close();
